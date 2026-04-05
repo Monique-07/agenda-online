@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Agenda de Atendimentos</title>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
+
+<style>
+* { box-sizing: border-box; }
+body {
+    font-family: 'Poppins', sans-serif;
+    background: linear-gradient(135deg, #667eea, #764ba2);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    margin: 0;
+}
+
+.container {
+    background: white;
+    width: 95%;
+    max-width: 700px;
+    padding: 25px;
+    border-radius: 15px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+h1 { text-align: center; margin-bottom: 20px; }
+
+input, button {
+    width: 100%;
+    padding: 10px;
+    margin: 6px 0;
+    border-radius: 8px;
+    border: 1px solid #ccc;
+    font-size: 14px;
+}
+
+button {
+    background: #667eea;
+    color: white;
+    border: none;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+button:hover { opacity: 0.9; }
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    font-size: 14px;
+}
+
+th, td {
+    padding: 10px;
+    border-bottom: 1px solid #ddd;
+    text-align: center;
+}
+
+th {
+    background: #667eea;
+    color: white;
+}
+
+tr:hover { background: #f1f1f1; }
+
+.actions button {
+    padding: 5px 8px;
+    font-size: 12px;
+    margin: 0 2px;
+}
+
+.delete { background: #e74c3c; }
+</style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Agenda de Atendimentos</h1>
+
+    <input type="text" id="nome" placeholder="Nome do cliente">
+    <input type="date" id="data">
+    <input type="time" id="hora">
+    <button onclick="adicionarAtendimento()">Salvar Atendimento</button>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyBcw0godfbxrTKQQRnyhP62IPD45I3Vgok",
+  authDomain: "agenda-atendimento-2640c.firebaseapp.com",
+  projectId: "agenda-atendimento-2640c",
+  storageBucket: "agenda-atendimento-2640c.firebasestorage.app",
+  messagingSenderId: "465879153833",
+  appId: "1:465879153833:web:bc70bf8d28304db51a7db8"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+const tabela = document.getElementById("tabela");
+
+function formatarData(dataISO) {
+    const [ano, mes, dia] = dataISO.split('-');
+    return `${dia}/${mes}`;
+}
+
+window.adicionarAtendimento = async function () {
+    const nome = document.getElementById('nome').value;
+    const dataISO = document.getElementById('data').value;
+    const hora = document.getElementById('hora').value;
+
+    if (!nome || !dataISO || !hora) {
+        alert("Preencha todos os campos!");
+        return;
+    }
+
+    await addDoc(collection(db, "atendimentos"), {
+        nome,
+        dataISO,
+        hora,
+        timestamp: new Date(dataISO + 'T' + hora)
+    });
+
+    document.getElementById('nome').value = "";
+    document.getElementById('data').value = "";
+    document.getElementById('hora').value = "";
+
+    carregarAtendimentos();
+}
+
+async function carregarAtendimentos() {
+    tabela.innerHTML = "";
+
+    const q = query(collection(db, "atendimentos"), orderBy("timestamp"));
+    const querySnapshot = await getDocs(q);
+
+    querySnapshot.forEach((docSnap) => {
+        const item = docSnap.data();
+        const tr = document.createElement("tr");
+
+        tr.innerHTML = `
+            <td>${item.nome}</td>
+            <td>${formatarData(item.dataISO)}</td>
+            <td>${item.hora}</td>
+            <td class="actions">
+                <button class="delete" onclick="excluir('${docSnap.id}')">Excluir</button>
+            </td>
+        `;
+
+        tabela.appendChild(tr);
+    });
+}
+
+window.excluir = async function (id) {
+    await deleteDoc(doc(db, "atendimentos", id));
+    carregarAtendimentos();
+}
+
+carregarAtendimentos();
+</script>
+
+</body>
+</html>
