@@ -21,7 +21,7 @@ body {
 .container {
     background: white;
     width: 95%;
-    max-width: 700px;
+    max-width: 900px;
     padding: 25px;
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
@@ -29,24 +29,26 @@ body {
 
 h1 { text-align: center; margin-bottom: 20px; }
 
-input, button {
-    width: 100%;
-    padding: 10px;
-    margin: 6px 0;
-    border-radius: 8px;
-    border: 1px solid #ccc;
-    font-size: 14px;
+.form-horario {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
 }
 
-button {
+.form-horario input, .form-horario button {
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid #ccc;
+}
+
+.form-horario button {
     background: #667eea;
     color: white;
     border: none;
     cursor: pointer;
-    transition: 0.3s;
 }
 
-button:hover { opacity: 0.9; }
+.form-horario button:hover { opacity: 0.9; }
 
 table {
     width: 100%;
@@ -68,13 +70,16 @@ th {
 
 tr:hover { background: #f1f1f1; }
 
-.actions button {
-    padding: 5px 8px;
-    font-size: 12px;
-    margin: 0 2px;
+button {
+    padding: 6px 10px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
 }
 
-.delete { background: #e74c3c; }
+.agendar { background: #27ae60; color: white; }
+.ocupado { background: #e74c3c; color: white; cursor: not-allowed; }
+.excluir { background: #333; color: white; }
 </style>
 </head>
 <body>
@@ -82,10 +87,11 @@ tr:hover { background: #f1f1f1; }
 <div class="container">
     <h1>Agenda de Atendimentos</h1>
 
-    <input type="text" id="nome" placeholder="Nome do cliente">
-    <input type="date" id="data">
-    <input type="time" id="hora">
-    <button onclick="adicionarAtendimento()">Salvar Atendimento</button>
+    <div class="form-horario">
+        <input type="date" id="novaData">
+        <input type="time" id="novaHora">
+        <button onclick="adicionarHorario()">Adicionar Horário</button>
+    </div>
 
     <table>
         <thead>
@@ -93,7 +99,8 @@ tr:hover { background: #f1f1f1; }
                 <th>Nome</th>
                 <th>Data</th>
                 <th>Hora</th>
-                <th>Ações</th>
+                <th>Status</th>
+                <th>Excluir</th>
             </tr>
         </thead>
         <tbody id="tabela"></tbody>
@@ -102,7 +109,7 @@ tr:hover { background: #f1f1f1; }
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
   apiKey: "AIzaSyBcw0godfbxrTKQQRnyhP62IPD45I3Vgok",
@@ -115,67 +122,103 @@ const firebaseConfig = {
 
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
-
 const tabela = document.getElementById("tabela");
 
 function formatarData(dataISO) {
+    if (!dataISO) return "-";
     const [ano, mes, dia] = dataISO.split('-');
     return `${dia}/${mes}`;
 }
 
-window.adicionarAtendimento = async function () {
-    const nome = document.getElementById('nome').value;
-    const dataISO = document.getElementById('data').value;
-    const hora = document.getElementById('hora').value;
+window.adicionarHorario = async function() {
+    try {
+        const data = document.getElementById("novaData").value;
+        const hora = document.getElementById("novaHora").value;
 
-    if (!nome || !dataISO || !hora) {
-        alert("Preencha todos os campos!");
-        return;
+        if (!data || !hora) {
+            alert("Selecione data e horário!");
+            return;
+        }
+
+        await addDoc(collection(db, "atendimentos"), {
+            nome: "",
+            dataISO: data,
+            hora: hora
+        });
+
+        document.getElementById("novaData").value = "";
+        document.getElementById("novaHora").value = "";
+
+        await carregarAgenda();
+
+    } catch (error) {
+        console.error("Erro ao adicionar:", error);
+        alert("Erro ao salvar no Firebase. Verifique as regras do Firestore.");
     }
-
-    await addDoc(collection(db, "atendimentos"), {
-        nome,
-        dataISO,
-        hora,
-        timestamp: new Date(dataISO + 'T' + hora)
-    });
-
-    document.getElementById('nome').value = "";
-    document.getElementById('data').value = "";
-    document.getElementById('hora').value = "";
-
-    carregarAtendimentos();
 }
 
-async function carregarAtendimentos() {
-    tabela.innerHTML = "";
+async function carregarAgenda() {
+    try {
+        tabela.innerHTML = "";
 
-    const q = query(collection(db, "atendimentos"), orderBy("timestamp"));
-    const querySnapshot = await getDocs(q);
+        const snapshot = await getDocs(collection(db, "atendimentos"));
 
-    querySnapshot.forEach((docSnap) => {
-        const item = docSnap.data();
-        const tr = document.createElement("tr");
+        snapshot.forEach((docSnap) => {
+            const item = docSnap.data();
+            const ocupado = item.nome && item.nome.trim() !== "";
 
-        tr.innerHTML = `
-            <td>${item.nome}</td>
-            <td>${formatarData(item.dataISO)}</td>
-            <td>${item.hora}</td>
-            <td class="actions">
-                <button class="delete" onclick="excluir('${docSnap.id}')">Excluir</button>
-            </td>
-        `;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+                <td>${ocupado ? item.nome : "-"}</td>
+                <td>${formatarData(item.dataISO)}</td>
+                <td>${item.hora || "-"}</td>
+                <td>
+                    ${ocupado
+                        ? '<button class="ocupado" disabled>Ocupado</button>'
+                        : `<button class="agendar" onclick="agendar('${docSnap.id}')">Agendar</button>`}
+                </td>
+                <td>
+                    <button class="excluir" onclick="excluirHorario('${docSnap.id}')">X</button>
+                </td>
+            `;
 
-        tabela.appendChild(tr);
-    });
+            tabela.appendChild(tr);
+        });
+
+    } catch (error) {
+        console.error("Erro ao carregar:", error);
+        alert("Erro ao conectar com o Firebase. Verifique se o Firestore está ativado.");
+    }
 }
 
-window.excluir = async function (id) {
-    await deleteDoc(doc(db, "atendimentos", id));
-    carregarAtendimentos();
+window.agendar = async function(id) {
+    try {
+        const nome = prompt("Digite o nome do cliente:");
+        if (!nome) return;
+
+        const ref = doc(db, "atendimentos", id);
+        await updateDoc(ref, { nome });
+
+        await carregarAgenda();
+
+    } catch (error) {
+        console.error("Erro ao agendar:", error);
+        alert("Erro ao atualizar no Firebase.");
+    }
 }
 
-carregarAtendimentos();
+window.excluirHorario = async function(id) {
+    try {
+        if (!confirm("Deseja excluir este horário?")) return;
+        await deleteDoc(doc(db, "atendimentos", id));
+        await carregarAgenda();
+    } catch (error) {
+        console.error("Erro ao excluir:", error);
+        alert("Erro ao excluir no Firebase.");
+    }
+}
+
+carregarAgenda();
 </script>
 
 </body>
