@@ -16,18 +16,23 @@ body {
     align-items: center;
     min-height: 100vh;
     margin: 0;
+    padding: 15px;
 }
 
 .container {
     background: white;
-    width: 95%;
+    width: 100%;
     max-width: 900px;
-    padding: 25px;
+    padding: 20px;
     border-radius: 15px;
     box-shadow: 0 10px 25px rgba(0,0,0,0.2);
 }
 
-h1 { text-align: center; margin-bottom: 20px; }
+h1 { 
+    text-align: center; 
+    margin-bottom: 20px; 
+    font-size: 22px;
+}
 
 .form-horario {
     display: flex;
@@ -36,9 +41,11 @@ h1 { text-align: center; margin-bottom: 20px; }
 }
 
 .form-horario input, .form-horario button {
-    padding: 8px;
-    border-radius: 6px;
+    padding: 10px;
+    border-radius: 8px;
     border: 1px solid #ccc;
+    font-size: 14px;
+    width: 100%;
 }
 
 .form-horario button {
@@ -46,15 +53,21 @@ h1 { text-align: center; margin-bottom: 20px; }
     color: white;
     border: none;
     cursor: pointer;
+    font-weight: 600;
 }
 
 .form-horario button:hover { opacity: 0.9; }
+
+.table-wrapper {
+    overflow-x: auto;
+}
 
 table {
     width: 100%;
     border-collapse: collapse;
     margin-top: 20px;
     font-size: 14px;
+    min-width: 600px;
 }
 
 th, td {
@@ -66,6 +79,7 @@ th, td {
 th {
     background: #667eea;
     color: white;
+    font-size: 13px;
 }
 
 tr:hover { background: #f1f1f1; }
@@ -75,11 +89,36 @@ button {
     border-radius: 6px;
     border: none;
     cursor: pointer;
+    font-size: 13px;
 }
 
 .agendar { background: #27ae60; color: white; }
 .ocupado { background: #e74c3c; color: white; cursor: not-allowed; }
 .excluir { background: #333; color: white; }
+
+/* 📱 Ajustes para celular */
+@media (max-width: 600px) {
+    h1 {
+        font-size: 18px;
+    }
+
+    .form-horario {
+        flex-direction: column;
+    }
+
+    table {
+        font-size: 12px;
+    }
+
+    th, td {
+        padding: 8px;
+    }
+
+    button {
+        font-size: 12px;
+        padding: 5px 8px;
+    }
+}
 </style>
 </head>
 <body>
