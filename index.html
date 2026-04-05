@@ -7,45 +7,48 @@
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600&display=swap" rel="stylesheet">
 
 <style>
-* { box-sizing: border-box; }
+* { box-sizing: border-box; margin:0; padding:0; }
+
 body {
     font-family: 'Poppins', sans-serif;
     background: linear-gradient(135deg, #667eea, #764ba2);
+    min-height: 100vh;
     display: flex;
     justify-content: center;
-    align-items: center;
-    min-height: 100vh;
-    margin: 0;
-    padding: 15px;
+    padding: 20px 10px;
 }
 
 .container {
-    background: white;
+    background: #ffffff;
     width: 100%;
-    max-width: 900px;
+    max-width: 1000px;
     padding: 20px;
-    border-radius: 15px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+    border-radius: 16px;
+    box-shadow: 0 15px 35px rgba(0,0,0,0.15);
 }
 
-h1 { 
-    text-align: center; 
-    margin-bottom: 20px; 
-    font-size: 22px;
+h1 {
+    text-align: center;
+    margin-bottom: 20px;
+    font-weight: 600;
 }
 
 .form-horario {
     display: flex;
     gap: 10px;
-    margin-bottom: 15px;
+    margin-bottom: 20px;
 }
 
-.form-horario input, .form-horario button {
-    padding: 10px;
-    border-radius: 8px;
-    border: 1px solid #ccc;
+.form-horario input,
+.form-horario button {
+    padding: 12px;
+    border-radius: 10px;
+    border: 1px solid #ddd;
     font-size: 14px;
-    width: 100%;
+}
+
+.form-horario input {
+    flex: 1;
 }
 
 .form-horario button {
@@ -54,39 +57,42 @@ h1 {
     border: none;
     cursor: pointer;
     font-weight: 600;
+    min-width: 160px;
 }
 
-.form-horario button:hover { opacity: 0.9; }
+.form-horario button:hover {
+    opacity: 0.9;
+}
 
 .table-wrapper {
-    overflow-x: auto;
+    width: 100%;
 }
 
+/* DESKTOP */
 table {
     width: 100%;
     border-collapse: collapse;
-    margin-top: 20px;
-    font-size: 14px;
-    min-width: 600px;
 }
 
 th, td {
-    padding: 10px;
-    border-bottom: 1px solid #ddd;
+    padding: 12px;
     text-align: center;
+    border-bottom: 1px solid #eee;
+    font-size: 14px;
 }
 
 th {
     background: #667eea;
     color: white;
-    font-size: 13px;
 }
 
-tr:hover { background: #f1f1f1; }
+tr:hover {
+    background: #f8f8f8;
+}
 
 button {
     padding: 6px 10px;
-    border-radius: 6px;
+    border-radius: 8px;
     border: none;
     cursor: pointer;
     font-size: 13px;
@@ -96,27 +102,58 @@ button {
 .ocupado { background: #e74c3c; color: white; cursor: not-allowed; }
 .excluir { background: #333; color: white; }
 
-/* 📱 Ajustes para celular */
-@media (max-width: 600px) {
-    h1 {
-        font-size: 18px;
-    }
+/* MOBILE PROFISSIONAL */
+@media (max-width: 768px) {
 
     .form-horario {
         flex-direction: column;
     }
 
-    table {
-        font-size: 12px;
+    .form-horario button {
+        width: 100%;
+        min-width: unset;
     }
 
-    th, td {
-        padding: 8px;
+    table, thead, tbody, th, td, tr {
+        display: block;
+        width: 100%;
     }
+
+    thead {
+        display: none;
+    }
+
+    tr {
+        background: #ffffff;
+        margin-bottom: 15px;
+        border-radius: 12px;
+        padding: 12px;
+        box-shadow: 0 8px 20px rgba(0,0,0,0.08);
+    }
+
+    td {
+        border: none;
+        text-align: left;
+        padding: 8px 0;
+        font-size: 14px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    td::before {
+        font-weight: 600;
+        margin-right: 10px;
+    }
+
+    td:nth-of-type(1)::before { content: "Nome:"; }
+    td:nth-of-type(2)::before { content: "Data:"; }
+    td:nth-of-type(3)::before { content: "Hora:"; }
+    td:nth-of-type(4)::before { content: "Status:"; }
+    td:nth-of-type(5)::before { content: "Excluir:"; }
 
     button {
-        font-size: 12px;
-        padding: 5px 8px;
+        width: auto;
     }
 }
 </style>
@@ -132,18 +169,20 @@ button {
         <button onclick="adicionarHorario()">Adicionar Horário</button>
     </div>
 
-    <table>
-        <thead>
-            <tr>
-                <th>Nome</th>
-                <th>Data</th>
-                <th>Hora</th>
-                <th>Status</th>
-                <th>Excluir</th>
-            </tr>
-        </thead>
-        <tbody id="tabela"></tbody>
-    </table>
+    <div class="table-wrapper">
+        <table>
+            <thead>
+                <tr>
+                    <th>Nome</th>
+                    <th>Data</th>
+                    <th>Hora</th>
+                    <th>Status</th>
+                    <th>Excluir</th>
+                </tr>
+            </thead>
+            <tbody id="tabela"></tbody>
+        </table>
+    </div>
 </div>
 
 <script type="module">
@@ -170,91 +209,65 @@ function formatarData(dataISO) {
 }
 
 window.adicionarHorario = async function() {
-    try {
-        const data = document.getElementById("novaData").value;
-        const hora = document.getElementById("novaHora").value;
+    const data = document.getElementById("novaData").value;
+    const hora = document.getElementById("novaHora").value;
 
-        if (!data || !hora) {
-            alert("Selecione data e horário!");
-            return;
-        }
-
-        await addDoc(collection(db, "atendimentos"), {
-            nome: "",
-            dataISO: data,
-            hora: hora
-        });
-
-        document.getElementById("novaData").value = "";
-        document.getElementById("novaHora").value = "";
-
-        await carregarAgenda();
-
-    } catch (error) {
-        console.error("Erro ao adicionar:", error);
-        alert("Erro ao salvar no Firebase. Verifique as regras do Firestore.");
+    if (!data || !hora) {
+        alert("Selecione data e horário!");
+        return;
     }
+
+    await addDoc(collection(db, "atendimentos"), {
+        nome: "",
+        dataISO: data,
+        hora: hora
+    });
+
+    document.getElementById("novaData").value = "";
+    document.getElementById("novaHora").value = "";
+
+    carregarAgenda();
 }
 
 async function carregarAgenda() {
-    try {
-        tabela.innerHTML = "";
+    tabela.innerHTML = "";
+    const snapshot = await getDocs(collection(db, "atendimentos"));
 
-        const snapshot = await getDocs(collection(db, "atendimentos"));
+    snapshot.forEach((docSnap) => {
+        const item = docSnap.data();
+        const ocupado = item.nome && item.nome.trim() !== "";
 
-        snapshot.forEach((docSnap) => {
-            const item = docSnap.data();
-            const ocupado = item.nome && item.nome.trim() !== "";
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+            <td>${ocupado ? item.nome : "-"}</td>
+            <td>${formatarData(item.dataISO)}</td>
+            <td>${item.hora || "-"}</td>
+            <td>
+                ${ocupado
+                    ? '<button class="ocupado" disabled>Ocupado</button>'
+                    : `<button class="agendar" onclick="agendar('${docSnap.id}')">Agendar</button>`}
+            </td>
+            <td>
+                <button class="excluir" onclick="excluirHorario('${docSnap.id}')">X</button>
+            </td>
+        `;
 
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-                <td>${ocupado ? item.nome : "-"}</td>
-                <td>${formatarData(item.dataISO)}</td>
-                <td>${item.hora || "-"}</td>
-                <td>
-                    ${ocupado
-                        ? '<button class="ocupado" disabled>Ocupado</button>'
-                        : `<button class="agendar" onclick="agendar('${docSnap.id}')">Agendar</button>`}
-                </td>
-                <td>
-                    <button class="excluir" onclick="excluirHorario('${docSnap.id}')">X</button>
-                </td>
-            `;
-
-            tabela.appendChild(tr);
-        });
-
-    } catch (error) {
-        console.error("Erro ao carregar:", error);
-        alert("Erro ao conectar com o Firebase. Verifique se o Firestore está ativado.");
-    }
+        tabela.appendChild(tr);
+    });
 }
 
 window.agendar = async function(id) {
-    try {
-        const nome = prompt("Digite o nome do cliente:");
-        if (!nome) return;
+    const nome = prompt("Digite o nome do cliente:");
+    if (!nome) return;
 
-        const ref = doc(db, "atendimentos", id);
-        await updateDoc(ref, { nome });
-
-        await carregarAgenda();
-
-    } catch (error) {
-        console.error("Erro ao agendar:", error);
-        alert("Erro ao atualizar no Firebase.");
-    }
+    await updateDoc(doc(db, "atendimentos", id), { nome });
+    carregarAgenda();
 }
 
 window.excluirHorario = async function(id) {
-    try {
-        if (!confirm("Deseja excluir este horário?")) return;
-        await deleteDoc(doc(db, "atendimentos", id));
-        await carregarAgenda();
-    } catch (error) {
-        console.error("Erro ao excluir:", error);
-        alert("Erro ao excluir no Firebase.");
-    }
+    if (!confirm("Deseja excluir este horário?")) return;
+    await deleteDoc(doc(db, "atendimentos", id));
+    carregarAgenda();
 }
 
 carregarAgenda();
