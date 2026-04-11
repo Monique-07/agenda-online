@@ -47,9 +47,7 @@ h1 {
     font-size: 14px;
 }
 
-.form-horario input {
-    flex: 1;
-}
+.form-horario input { flex: 1; }
 
 .form-horario button {
     background: #667eea;
@@ -60,13 +58,7 @@ h1 {
     min-width: 160px;
 }
 
-.form-horario button:hover {
-    opacity: 0.9;
-}
-
-.table-wrapper {
-    width: 100%;
-}
+.form-horario button:hover { opacity: 0.9; }
 
 table {
     width: 100%;
@@ -85,9 +77,7 @@ th {
     color: white;
 }
 
-tr:hover {
-    background: #f8f8f8;
-}
+tr:hover { background: #f8f8f8; }
 
 button {
     padding: 6px 10px;
@@ -103,23 +93,14 @@ button {
 
 @media (max-width: 768px) {
 
-    .form-horario {
-        flex-direction: column;
-    }
-
-    .form-horario button {
-        width: 100%;
-        min-width: unset;
-    }
+    .form-horario { flex-direction: column; }
 
     table, thead, tbody, th, td, tr {
         display: block;
         width: 100%;
     }
 
-    thead {
-        display: none;
-    }
+    thead { display: none; }
 
     tr {
         background: #ffffff;
@@ -136,13 +117,9 @@ button {
         font-size: 14px;
         display: flex;
         justify-content: space-between;
-        align-items: center;
     }
 
-    td::before {
-        font-weight: 600;
-        margin-right: 10px;
-    }
+    td::before { font-weight: 600; }
 
     td:nth-of-type(1)::before { content: "Nome:"; }
     td:nth-of-type(2)::before { content: "Data:"; }
@@ -163,28 +140,26 @@ button {
         <button onclick="adicionarHorario()">Adicionar Horário</button>
     </div>
 
-    <div class="table-wrapper">
-        <table>
-            <thead>
-                <tr>
-                    <th>Nome</th>
-                    <th>Data</th>
-                    <th>Hora</th>
-                    <th>Status</th>
-                    <th>Excluir</th>
-                </tr>
-            </thead>
-            <tbody id="tabela"></tbody>
-        </table>
-    </div>
+    <table>
+        <thead>
+            <tr>
+                <th>Nome</th>
+                <th>Data</th>
+                <th>Hora</th>
+                <th>Status</th>
+                <th>Excluir</th>
+            </tr>
+        </thead>
+        <tbody id="tabela"></tbody>
+    </table>
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "SUA_API_KEY",
+  apiKey: "SUA_API_KEY_AQUI",
   authDomain: "agenda-atendimento-2640c.firebaseapp.com",
   projectId: "agenda-atendimento-2640c",
   storageBucket: "agenda-atendimento-2640c.firebasestorage.app",
@@ -226,16 +201,25 @@ window.adicionarHorario = async function() {
 async function carregarAgenda() {
     tabela.innerHTML = "";
 
-    const q = query(
-        collection(db, "atendimentos"),
-        orderBy("dataISO", "asc"),
-        orderBy("hora", "asc")
-    );
+    const snapshot = await getDocs(collection(db, "atendimentos"));
 
-    const snapshot = await getDocs(q);
+    const lista = [];
 
     snapshot.forEach((docSnap) => {
-        const item = docSnap.data();
+        lista.push({
+            id: docSnap.id,
+            ...docSnap.data()
+        });
+    });
+
+    // ORDENAÇÃO GARANTIDA POR DATA + HORA
+    lista.sort((a, b) => {
+        const dataHoraA = new Date(`${a.dataISO}T${a.hora}`);
+        const dataHoraB = new Date(`${b.dataISO}T${b.hora}`);
+        return dataHoraA - dataHoraB;
+    });
+
+    lista.forEach((item) => {
         const ocupado = item.nome && item.nome.trim() !== "";
 
         const tr = document.createElement("tr");
@@ -246,13 +230,12 @@ async function carregarAgenda() {
             <td>
                 ${ocupado
                     ? '<button class="ocupado" disabled>Ocupado</button>'
-                    : `<button class="agendar" onclick="agendar('${docSnap.id}')">Agendar</button>`}
+                    : `<button class="agendar" onclick="agendar('${item.id}')">Agendar</button>`}
             </td>
             <td>
-                <button class="excluir" onclick="excluirHorario('${docSnap.id}')">X</button>
+                <button class="excluir" onclick="excluirHorario('${item.id}')">X</button>
             </td>
         `;
-
         tabela.appendChild(tr);
     });
 }
