@@ -68,7 +68,6 @@ h1 {
     width: 100%;
 }
 
-/* DESKTOP */
 table {
     width: 100%;
     border-collapse: collapse;
@@ -102,7 +101,6 @@ button {
 .ocupado { background: #e74c3c; color: white; cursor: not-allowed; }
 .excluir { background: #333; color: white; }
 
-/* MOBILE PROFISSIONAL */
 @media (max-width: 768px) {
 
     .form-horario {
@@ -151,10 +149,6 @@ button {
     td:nth-of-type(3)::before { content: "Hora:"; }
     td:nth-of-type(4)::before { content: "Status:"; }
     td:nth-of-type(5)::before { content: "Excluir:"; }
-
-    button {
-        width: auto;
-    }
 }
 </style>
 </head>
@@ -187,10 +181,10 @@ button {
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, getDocs, updateDoc, deleteDoc, doc, query, orderBy } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
-  apiKey: "AIzaSyBcw0godfbxrTKQQRnyhP62IPD45I3Vgok",
+  apiKey: "SUA_API_KEY",
   authDomain: "agenda-atendimento-2640c.firebaseapp.com",
   projectId: "agenda-atendimento-2640c",
   storageBucket: "agenda-atendimento-2640c.firebasestorage.app",
@@ -205,7 +199,7 @@ const tabela = document.getElementById("tabela");
 function formatarData(dataISO) {
     if (!dataISO) return "-";
     const [ano, mes, dia] = dataISO.split('-');
-    return `${dia}/${mes}`;
+    return `${dia}/${mes}/${ano}`;
 }
 
 window.adicionarHorario = async function() {
@@ -231,7 +225,14 @@ window.adicionarHorario = async function() {
 
 async function carregarAgenda() {
     tabela.innerHTML = "";
-    const snapshot = await getDocs(collection(db, "atendimentos"));
+
+    const q = query(
+        collection(db, "atendimentos"),
+        orderBy("dataISO", "asc"),
+        orderBy("hora", "asc")
+    );
+
+    const snapshot = await getDocs(q);
 
     snapshot.forEach((docSnap) => {
         const item = docSnap.data();
